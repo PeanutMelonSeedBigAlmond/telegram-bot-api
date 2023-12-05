@@ -8,6 +8,8 @@
 
 #include "telegram-bot-api/ClientParameters.h"
 
+#include "telegram-bot-api/SystemProxyHelper.h"
+
 #include "td/db/TQueue.h"
 
 #include "td/actor/MultiPromise.h"
@@ -5003,6 +5005,24 @@ void Client::on_update_authorization_state() {
       send_request(make_object<td_api::setOption>("disable_time_adjustment_protection",
                                                   make_object<td_api::optionValueBoolean>(true)),
                    td::make_unique<TdOnOkCallback>());
+
+      // use system proxy
+      // https://github.com/tdlib/telegram-bot-api/issues/399
+      auto proxy = peanut::getProxy();
+      if (proxy != nullptr) {
+        LOG(INFO) << "Using" << proxy->type << "proxy: host=" << proxy->host << ", port=" << proxy->port;
+        if (proxy->type == "http" || proxy->type == "https") {
+          send_request(make_object<td_api::addProxy>(
+                           proxy->host, proxy->port, true,
+                           make_object<td_api::proxyTypeHttp>(proxy->username, proxy->password, false)),
+                       td::make_unique<TdOnOkCallback>());
+        } else if (proxy->type == "socks5") {
+          send_request(
+              make_object<td_api::addProxy>(proxy->host, proxy->port, true,
+                                            make_object<td_api::proxyTypeSocks5>(proxy->username, proxy->password)),
+              td::make_unique<TdOnOkCallback>());
+        }
+      }
 
       auto request = make_object<td_api::setTdlibParameters>();
       request->use_test_dc_ = is_test_dc_;

@@ -101,6 +101,9 @@ set(TELEGRAM_BOT_API_SOURCE
   telegram-bot-api/Stats.h
   telegram-bot-api/Watchdog.h
   telegram-bot-api/WebhookActor.h
+
+  telegram-bot-api/SystemProxyHelper.h
+  telegram-bot-api/SystemProxyHelper.cpp
 )
 
 add_executable(telegram-bot-api ${TELEGRAM_BOT_API_SOURCE})
